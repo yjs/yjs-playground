@@ -1,7 +1,9 @@
-import { atom, useAtom, useAtomValue } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { useEffect, useState } from "react";
 import * as Y from "yjs";
+import { YShapeItem } from "./components/filter-sphere";
+import { filterYDoc } from "./filter-map";
 
 const TRACK_ALL_ORIGINS = Symbol();
 
@@ -102,4 +104,41 @@ const configAtom = atomWithStorage<Config>(
 
 export const useConfig = () => {
   return useAtom(configAtom);
+};
+
+const falseFn = () => false;
+const filterPredicateAtom = atom<{ fn: (data: YShapeItem) => boolean }>({
+  fn: falseFn,
+});
+
+export const useUpdateFilterPredicate = () => {
+  const set = useSetAtom(filterPredicateAtom);
+  return set;
+};
+
+const filteredYDocAtom = atom((get) => {
+  const yDoc = get(yDocAtom);
+  const predicate = get(filterPredicateAtom).fn;
+  if (predicate === falseFn) {
+    return {};
+  }
+  const filterMap = filterYDoc(yDoc, predicate);
+  return filterMap;
+});
+
+export const useFilterMap = () => {
+  const [data] = useAtom(filteredYDocAtom);
+  return data;
+};
+
+export const useFilterCount = () => {
+  const [data] = useAtom(filteredYDocAtom);
+  return Object.keys(data).length;
+};
+
+export const useIsFilterEnable = () => {
+  const count = useFilterCount();
+  const [config] = useAtom(configAtom);
+  // Fix use number of filter rules
+  return config.parseYDoc && count > 0;
 };

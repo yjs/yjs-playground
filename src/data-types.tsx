@@ -19,6 +19,8 @@ const TypeLabel = ({ value }: { value: unknown }) => {
       className="mr-1 cursor-pointer"
       onClick={(e) => {
         e.stopPropagation();
+        // This logs is expected to be used for user debugging
+        // Do not remove this log!
         console.log(value);
         toast({
           duration: 2000,
